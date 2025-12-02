@@ -1,39 +1,14 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
+using System.Drawing;
 using System.Globalization;
 
 namespace DataScienceSteam
 {
-    internal class Program
+    internal static class Utils
     {
-        static void Main(string[] args)
-        {
-            // CSV einlesen
-            using var reader = new StreamReader("data.csv");
-
-            using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = true
-            });
-
-            var rows = csv.GetRecords<SteamGameRow>().ToList();
-
-            // Zeile finden, z.B. wo Genre == "Horror"
-            var result = rows.FirstOrDefault(r => r.Name == "Dicey Chess");
-
-            if (result != null)
-            {
-                Console.WriteLine($"Name: {result.Name}, Price: {result.Price}, Genre: {ToArraySafe(result.Genres)[0]}");
-            }
-            else
-            {
-                Console.WriteLine("Keine passende Zeile gefunden.");
-            }
-
-        }
-
-        public static string[] ToArraySafe(string raw)
+        public static string[] ToArraySafe(this string raw)
         {
             if (string.IsNullOrWhiteSpace(raw))
                 return Array.Empty<string>();
@@ -45,7 +20,39 @@ namespace DataScienceSteam
             return System.Text.Json.JsonSerializer.Deserialize<string[]>(json)
                    ?? Array.Empty<string>();
         }
+    }
 
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Plot_Utilties.GeneratePlot(new[] { 0d, 2d, 1d }, new[] { "A", "B", "C" }, ScottPlot.Color.Gray(2), "Titel","Left", "Bottom", "File");
+
+            return;
+
+            // CSV einlesen
+            using var reader = new StreamReader("data.csv");
+
+            using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true
+            });
+
+            var rows = csv.GetRecords<SteamGameRow>().ToList();
+
+            var result = rows.FirstOrDefault(r => r.Name == "Dicey Chess");
+            rows.Where(x => x.Genres.ToArraySafe().Contains("RPG")).Gro;
+
+
+            if (result != null)
+            {
+                Console.WriteLine($"Name: {result.Name}, Price: {result.Price}, Genre: {result.Genres.ToArraySafe()[0]}");
+            }
+            else
+            {
+                Console.WriteLine("Keine passende Zeile gefunden.");
+            }
+        }
     }
 
     public class SteamGameRow
@@ -117,16 +124,16 @@ namespace DataScienceSteam
         public string Notes { get; set; }
 
         [Name("supported_languages")]
-        public string SupportedLanguages { get; set; } // JSON array
+        public string SupportedLanguagesArray { get; set; } // JSON array
 
         [Name("full_audio_languages")]
-        public string FullAudioLanguages { get; set; } // JSON array
+        public string FullAudioLanguagesArray { get; set; } // JSON array
 
         [Name("packages")]
-        public string Packages { get; set; } // JSON object
+        public string PackagesObject { get; set; } // JSON object
 
         [Name("developers")]
-        public string Developers { get; set; } // JSON array
+        public string DevelopersArray { get; set; } // JSON array
 
         [Name("publishers")]
         public string Publishers { get; set; }
