@@ -22,16 +22,24 @@ namespace DataScienceSteam
         }
     }
 
+    internal class GenreEngagement
+    {
+        public string genre;
+        public double ES;
+    }
+
+    internal class GenreAvergePlaytime
+    {
+        public string genre; public double avgPlaytime;
+    }
+
     internal class Program
     {
         static void Main(string[] args)
         {
-            Plot_Utilties.GeneratePlot(new[] { 0d, 2d, 1d }, new[] { "A", "B", "C" }, ScottPlot.Color.Gray(2), "Titel","Left", "Bottom", "File");
-
-            return;
 
             // CSV einlesen
-            using var reader = new StreamReader("data.csv");
+            using var reader = new StreamReader("C:\\Users\\user\\Documents\\steam_march.csv");
 
             using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -40,20 +48,57 @@ namespace DataScienceSteam
 
             var rows = csv.GetRecords<SteamGameRow>().ToList();
 
-            var result = rows.FirstOrDefault(r => r.Name == "Dicey Chess");
-            rows.Where(x => x.Genres.ToArraySafe().Contains("RPG")).Gro;
+            //var result = rows.FirstOrDefault(r => r.Name == "Dicey Chess");
+
+            var genrePlaytime =
+                rows.Where(game => game.MedianPlaytimeForever > 0)
+                .SelectMany(game =>
+                    game.Genres.ToArraySafe().Select(genre => new GenreAvergePlaytime
+                    {
+                        genre = genre,
+                        avgPlaytime = game.AveragePlaytimeForever / game.EstOwners()
+                    })
+                )
+                .GroupBy(x => x.genre)
+                .Select(g => new GenreAvergePlaytime
+                {
+                    genre = g.Key,
+                    avgPlaytime = g.Average(v => v.avgPlaytime)
+                })
+                .ToList();
+
+            foreach (var item in genrePlaytime)
+            {
+                Console.WriteLine(item.avgPlaytime);
+            }
 
 
-            if (result != null)
-            {
-                Console.WriteLine($"Name: {result.Name}, Price: {result.Price}, Genre: {result.Genres.ToArraySafe()[0]}");
-            }
-            else
-            {
-                Console.WriteLine("Keine passende Zeile gefunden.");
-            }
+            var genreEngagements =
+                rows.Where(game => game.MedianPlaytimeForever > 0)
+                .SelectMany(game =>
+                    game.Genres.ToArraySafe().Select(genre => new GenreEngagement
+                    {
+                        genre = genre,
+                        ES = game.AveragePlaytimeForever / game.MedianPlaytimeForever
+                    })
+                )
+                .GroupBy(x => x.genre)
+                .Select(g => new GenreEngagement
+                {
+                    genre = g.Key,
+                    ES = g.Average(v => v.ES)
+                })
+                .ToList();
+
+
+            Console.WriteLine(genreEngagements.Count);
+            Console.WriteLine(genrePlaytime.Count());
+
+            Plot_Utilties.GeneratePlot(genrePlaytime.Select(x => x.avgPlaytime).ToArray(),genreEngagements.Select(x => x.ES).ToArray(), genreEngagements.Select(x => x.genre).ToArray(), ScottPlot.Color.Gray(2), "Engagement per Genre", "Engagement Score", "Genres", "File");
         }
     }
+
+
 
     public class SteamGameRow
     {
@@ -163,7 +208,17 @@ namespace DataScienceSteam
         public int Negative { get; set; }
 
         [Name("estimated_owners")]
-        public string EstimatedOwners { get; set; }
+        public string EstimatedOwners { private get; set; }
+
+        public int EstOwners()
+        {
+            string[] split = EstimatedOwners.Split("-");
+
+            int min = int.Parse(split[0]);
+            int max = int.Parse(split[1]);
+
+            return (min + max) / 2;
+        }
 
         [Name("average_playtime_forever")]
         public int AveragePlaytimeForever { get; set; }
