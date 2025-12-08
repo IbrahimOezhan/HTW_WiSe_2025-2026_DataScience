@@ -3,7 +3,7 @@ using ScottPlot.Plottables;
 
 namespace DataScienceSteam
 {
-    internal class Plot_Utilties
+    internal class Utils_Plot
     {
         public static Plot GeneratePlot(
             double[] values, string[] labels,Color barColor, string titel, 
