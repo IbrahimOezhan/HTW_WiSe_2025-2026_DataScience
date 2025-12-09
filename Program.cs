@@ -39,6 +39,9 @@ namespace DataScienceSteam
 
             var rows = csv.GetRecords<Steam_Game>().ToList();
 
+            Console.WriteLine("Free: " + rows.Where(x => x.Price == 0).Count());
+            Console.WriteLine("Paid: " + rows.Where(x => x.Price != 0).Count());
+
             List<PlayerAmount_Engagement> playerAmount = 
                 rows
                 .Where(game => game.MedianPlaytimeForever > 0)
