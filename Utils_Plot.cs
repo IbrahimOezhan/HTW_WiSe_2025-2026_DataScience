@@ -7,11 +7,9 @@ namespace DataScienceSteam
     {
         public static Plot GeneratePlot(
             double[] values, string[] labels,Color barColor, string titel, 
-            string leftLabel, string bottomLabel,string fileNameWitoutExtension)
+            string leftLabel, string bottomLabel,string fileNameWitoutExtension, int space = 30, int offsetX = 20)
         {
             Plot plot = new();
-
-            int space = 30;
 
             for (int i = 0; i < values.Length; i++)
             {
@@ -30,7 +28,7 @@ namespace DataScienceSteam
 
             plot.Axes.Bottom.TickLabelStyle.Rotation = 90;
             plot.Axes.Bottom.TickLabelStyle.Alignment = Alignment.UpperRight;
-            plot.Axes.Bottom.TickLabelStyle.OffsetX = 20;
+            plot.Axes.Bottom.TickLabelStyle.OffsetX = offsetX;
             plot.Axes.Bottom.TickLabelStyle.OffsetY = -15;
             plot.Axes.Bottom.TickLabelStyle.ForeColor = Color.FromColor(System.Drawing.Color.Red);
 
@@ -46,9 +44,11 @@ namespace DataScienceSteam
 
             plot.Axes.Bottom.Label.Text = bottomLabel;
 
-            plot.Axes.AutoScale();
+            //plot.Axes.AutoScale();
 
-            plot.SavePng(fileNameWitoutExtension + ".png", 800, 600);
+            plot.Axes.SetLimitsX(-space, (values.Length - 1) * space + space);
+
+            plot.SavePng(fileNameWitoutExtension + ".png", 800, 400);
 
             return plot;
         }
@@ -128,7 +128,7 @@ namespace DataScienceSteam
 
             plot.Axes.AutoScale();
 
-            plot.SavePng(fileNameWitoutExtension + ".png", 1000, 1000);
+            plot.SavePng(fileNameWitoutExtension + ".png", 800, 500);
 
             return plot;
         }
