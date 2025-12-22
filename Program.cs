@@ -131,6 +131,15 @@ namespace DataScienceSteam
             "Spieltyp",
             "Single_vs_Multi_Engagement", 30, 40);
 
+            Utils_Plot.GeneratePlot(
+playerTypeEngagements.Select(x => x.ES).Append(multiPlayer).ToArray(),
+            playerTypeEngagements.Select(x => x.playerType).Append(labels[1]).ToArray(),
+ScottPlot.Color.Gray(2),
+"Engagement: Singleplayer vs Multiplayer",
+"Engagement Score",
+"Spieltyp",
+"Single_vs_Multi_Engagement_2", 30, 40);
+
             List<GenreAvergePlaytime> genrePlaytime =
             rows
             .Where(game => game.MedianPlaytimeForever > 0)
@@ -163,7 +172,6 @@ namespace DataScienceSteam
             .ToList();
 
             Utils_Plot.GeneratePlot(
-            genrePlaytime.Select(x => x.avgPlaytime).ToArray(),
             genreEngagements.Select(x => x.ES).ToArray(),
             genreEngagements.Select(x => x.genre).ToArray(),
             ScottPlot.Color.Gray(2),

@@ -128,7 +128,7 @@ namespace DataScienceSteam
 
             plot.Axes.AutoScale();
 
-            plot.SavePng(fileNameWitoutExtension + ".png", 800, 500);
+            plot.SavePng(fileNameWitoutExtension + ".png", 800, 400);
 
             return plot;
         }
