@@ -43,7 +43,21 @@ namespace DataScienceSteam
                 "Remote Play Together"
                 };
 
-
+        public static readonly IReadOnlyList<string> nonGameGenres =
+        new List<string>
+        {
+        "Photo Editing",
+        "Video Production",
+        "Animation & Modeling",
+        "Design & Illustration",
+        "Audio Production",
+        "Web Publishing",
+        "Software Training",
+        "Accounting",
+        "Game Development",
+        "Education",
+        "Utilities"
+            };
 
         static void Main(string[] args)
         {
@@ -56,16 +70,92 @@ namespace DataScienceSteam
 
             var rows = csv.GetRecords<Steam_Game>().ToList();
 
+            var validGames = rows
+                .Where(g => g.MedianPlaytimeForever > 0)
+                .ToList();
+
+
+            var mmoCategoryAppIds = validGames
+                .Where(g => g.Categories.ToArraySafe().Contains("MMO"))
+                .Select(g => g.AppId)
+                .ToHashSet();
+
+            var massivelyMultiplayerGenreAppIds = validGames
+                .Where(g => g.Genres.ToArraySafe().Contains("Massively Multiplayer"))
+                .Select(g => g.AppId)
+                .ToHashSet();
+
+            var onlyInCategory = mmoCategoryAppIds
+                .Except(massivelyMultiplayerGenreAppIds)
+                .ToList();
+
+            var onlyInGenre = massivelyMultiplayerGenreAppIds
+                .Except(mmoCategoryAppIds)
+                .ToList();
+
+            var intersection = mmoCategoryAppIds
+                .Intersect(massivelyMultiplayerGenreAppIds)
+                .ToList();
+
+            var union = mmoCategoryAppIds
+                .Union(massivelyMultiplayerGenreAppIds)
+                .ToList();
+
+            Console.WriteLine($"MMO Kategorie Spiele: {mmoCategoryAppIds.Count}");
+            Console.WriteLine($"Massively Multiplayer Genre Spiele: {massivelyMultiplayerGenreAppIds.Count}");
+            Console.WriteLine($"Überschneidung: {intersection.Count}");
+            Console.WriteLine($"Nur Kategorie: {onlyInCategory.Count}");
+            Console.WriteLine($"Nur Genre: {onlyInGenre.Count}");
+            Console.WriteLine($"Gesamt (Union): {union.Count}");
+
+            var appIdToName = rows
+                .GroupBy(r => r.AppId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First().Name
+                );
+
+            Console.WriteLine("\n--- Alle MMO oder Massively-Multiplayer Spiele ---");
+
+            union
+                .Select(id => appIdToName.TryGetValue(id, out var name) ? name : $"<Unknown {id}>")
+                .OrderBy(name => name)
+                .ToList()
+                .ForEach(Console.WriteLine);
+
             Console.WriteLine("Free: " + rows.Where(x => x.Price == 0).Count());
+
             Console.WriteLine("Paid: " + rows.Where(x => x.Price != 0).Count());
 
-            // Engagement Score per Player Type (fractional weighting per game)
-            var playerTypeEngagements =
-            rows
-            .Where(game => game.MedianPlaytimeForever > 0)
+            Console.WriteLine(rows.Count);
+
+            Console.WriteLine($"Total Rows: {rows.Count}");
+
+            Console.WriteLine(
+                validGames.Count(game =>
+                    !game.Genres.ToArraySafe().Any(g => nonGameGenres.Contains(g)))
+            );
+
+            Console.WriteLine(
+                "Software Filtered: " + rows.Count(game =>
+                    game.MedianPlaytimeForever == 0 &&
+                    game.Tags.ParseTagDictionary().ContainsKey("Software"))
+            );
+
+            Console.WriteLine(
+                "Software Total: " + rows.Count(game =>
+                    game.Tags.ParseTagDictionary().ContainsKey("Software"))
+            );
+
+            Console.WriteLine(
+                $"Games with MedianPlaytime > 0: {validGames.Count}"
+            );
+
+
+            var playerTypeEngagements = validGames
+            .Where(game => !game.Genres.ToArraySafe().Any(genres => nonGameGenres.Contains(genres)))
             .SelectMany(game =>
             {
-                // categories matching your playerModeTypes list
                 var modes = game.Categories
                         .ToArraySafe()
                         .Where(c => playerModeTypes.Contains(c))
@@ -76,7 +166,7 @@ namespace DataScienceSteam
                     return Enumerable.Empty<(string mode, double es, double w)>();
 
                 double es = (double)game.AveragePlaytimeForever / game.MedianPlaytimeForever;
-                double w = 1.0 / modes.Count; // each game contributes total weight = 1
+                double w = 1.0 / modes.Count;
 
                 return modes.Select(m => (mode: m, es: es, w: w));
             })
@@ -89,14 +179,7 @@ namespace DataScienceSteam
             .OrderByDescending(x => x.ES)
             .ToList();
 
-            Utils_Plot.GeneratePlot(
-            playerTypeEngagements.Select(x => x.ES).ToArray(),
-            playerTypeEngagements.Select(x => x.playerType).ToArray(),
-            ScottPlot.Color.Gray(2),
-            "Engagement per Player Type",
-            "Engagement Score",
-            "Player Type",
-            "PlayerType_Engagement");
+            playerTypeEngagements = playerTypeEngagements.OrderByDescending(x => x.ES).ToList();
 
             var singlePlayer = playerTypeEngagements
             .Where(x => x.playerType == "Single-player")
@@ -122,46 +205,6 @@ namespace DataScienceSteam
                 "Multiplayer"
                 };
 
-            Utils_Plot.GeneratePlot(
-            values,
-            labels,
-            ScottPlot.Color.Gray(2),
-            "Engagement: Singleplayer vs Multiplayer",
-            "Engagement Score",
-            "Spieltyp",
-            "Single_vs_Multi_Engagement", 30, 40);
-
-            Utils_Plot.GeneratePlot(
-playerTypeEngagements.Select(x => x.ES).Append(multiPlayer).ToArray(),
-            playerTypeEngagements.Select(x => x.playerType).Append(labels[1]).ToArray(),
-ScottPlot.Color.Gray(2),
-"Engagement: Singleplayer vs Multiplayer",
-"Engagement Score",
-"Spieltyp",
-"Single_vs_Multi_Engagement_2", 30, 40);
-
-            List<GenreAvergePlaytime> genrePlaytime =
-            rows
-            .Where(game => game.MedianPlaytimeForever > 0)
-            .SelectMany(game =>
-            game.Genres.
-            ToArraySafe().
-            Select(genre =>
-            new GenreAvergePlaytime
-            {
-                genre = genre,
-                avgPlaytime = game.AveragePlaytimeForever / game.EstOwners()
-            })
-            )
-            .GroupBy(x => x.genre)
-            .Select(g =>
-            new GenreAvergePlaytime
-            {
-                genre = g.Key,
-                avgPlaytime = g.Average(v => v.avgPlaytime)
-            })
-            .ToList();
-
             List<GenreEngagement> genreEngagements =
             rows.Where(game => game.MedianPlaytimeForever > 0)
             .SelectMany(game =>
@@ -171,14 +214,34 @@ ScottPlot.Color.Gray(2),
             .Select(g => new GenreEngagement(g.Key, g.Average(v => v.ES)))
             .ToList();
 
+            genreEngagements = genreEngagements.OrderByDescending(x => x.ES).ToList();
+
             Utils_Plot.GeneratePlot(
-            genreEngagements.Select(x => x.ES).ToArray(),
-            genreEngagements.Select(x => x.genre).ToArray(),
-            ScottPlot.Color.Gray(2),
-            "Engagement per Genre",
-            "Engagement Score",
-            "Genres",
-            "File");
+                values,
+                labels,
+                ScottPlot.Color.Gray(2),
+                "Engagement: Einzelspieler im Vergleich mit Mehrspieler",
+                "Engagement Score",
+                "Spieltyp",
+                "Engagement_Einzel_Mehrspieler", 30, 40);
+
+            Utils_Plot.GeneratePlot(
+                playerTypeEngagements.Select(x => x.ES).ToArray(),
+                playerTypeEngagements.Select(x => x.playerType).ToArray(),
+                ScottPlot.Color.Gray(2),
+                "Engagement: Einzelspieler im Vergleich mit Mehrspieler Kategorien",
+                "Engagement Score",
+                "Spieltyp",
+                "Engagement_Spieltyp");
+
+            Utils_Plot.GeneratePlot(
+                genreEngagements.Select(x => x.ES).ToArray(),
+                genreEngagements.Select(x => x.genre).ToArray(),
+                ScottPlot.Color.Gray(2),
+                "Engagement per Genre",
+                "Engagement Score",
+                "Genres",
+                "Engagement_Genre");
         }
     }
 }

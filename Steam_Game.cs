@@ -11,7 +11,7 @@ namespace DataScienceSteam
         public string Name { get; set; }
 
         [Name("release_date")]
-        public DateOnly ReleaseDate { get; set; }  // stabiler als DateTime
+        public DateOnly ReleaseDate { get; set; }
 
         [Name("required_age")]
         public int RequiredAge { get; set; }
@@ -89,7 +89,7 @@ namespace DataScienceSteam
         public string Categories { get; set; }
 
         [Name("genres")]
-        public string Genres { get ; set; }
+        public string Genres { get; set; }
 
         [Name("screenshots")]
         public string Screenshots { get; set; }
@@ -155,5 +155,4 @@ namespace DataScienceSteam
         [Name("num_reviews_recent")]
         public int NumReviewsRecent { get; set; }
     }
-
 }

@@ -1,9 +1,4 @@
 ﻿namespace DataScienceSteam
 {
-    internal class GenreAvergePlaytime
-    {
-        public string genre;
-        public double avgPlaytime;
-    }
-
+    internal record GenreAvergePlaytime(string genre, double avgPlaytime);
 }

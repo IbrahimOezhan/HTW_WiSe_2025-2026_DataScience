@@ -6,8 +6,8 @@ namespace DataScienceSteam
     internal class Utils_Plot
     {
         public static Plot GeneratePlot(
-            double[] values, string[] labels,Color barColor, string titel, 
-            string leftLabel, string bottomLabel,string fileNameWitoutExtension, int space = 30, int offsetX = 20)
+            double[] values, string[] labels, Color barColor, string titel,
+            string leftLabel, string bottomLabel, string fileNameWitoutExtension, int space = 30, int offsetX = 20)
         {
             Plot plot = new();
 
@@ -34,7 +34,7 @@ namespace DataScienceSteam
 
             plot.Axes.Bottom.MajorTickStyle.Length = 0;
 
-            plot.HideGrid();
+            //plot.HideGrid();
 
             plot.Axes.Margins(bottom: 0);
 
@@ -54,8 +54,8 @@ namespace DataScienceSteam
         }
 
         public static Plot GeneratePlot(
-    double[] values, double[] secondValue, string[] labels, Color barColor, string titel,
-    string leftLabel, string bottomLabel, string fileNameWitoutExtension)
+            double[] values, double[] secondValue, string[] labels, Color barColor, string titel,
+            string leftLabel, string bottomLabel, string fileNameWitoutExtension)
         {
             Plot plot = new();
 
@@ -93,7 +93,6 @@ namespace DataScienceSteam
                 plot.Add.Bar(bar2);
             }
 
-            // build the legend manually
             plot.Legend.IsVisible = true;
             plot.Legend.Alignment = Alignment.UpperLeft;
             plot.Legend.ManualItems.Add(new() { LabelText = "Average Playtime", FillColor = blue });
